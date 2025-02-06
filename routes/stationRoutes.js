@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const { authenticateUser } = require('../middlewares/auth');
+
 const StationController = require('../controllers/stationController');
 
 // Create a new station

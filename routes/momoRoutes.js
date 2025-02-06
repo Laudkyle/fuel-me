@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const { authenticateUser } = require('../middlewares/auth');
+
 const MomoController = require('../controllers/momoController');
 
 // Create a new momo account
