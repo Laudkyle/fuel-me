@@ -5,10 +5,9 @@ const fs = require('fs');
 
 dotenv.config();
 
-// Function to generate a random secret key
-const generateSecretKey = () => crypto.randomBytes(32).toString('hex'); // 256-bit key
+// Generate Secret Keys if not in .env
+const generateSecretKey = () => crypto.randomBytes(32).toString('hex');
 
-// Load or generate secret keys
 let accessTokenSecret = process.env.JWT_ACCESS_SECRET;
 let refreshTokenSecret = process.env.JWT_REFRESH_SECRET;
 
@@ -22,8 +21,8 @@ if (!accessTokenSecret || !refreshTokenSecret) {
   console.log('Generated new JWT secrets and saved to .env');
 }
 
-// Fake database for storing refresh tokens (Use a real DB in production)
-const refreshTokensDB = new Set(); // Store refresh tokens
+// 🚀 Store Refresh Tokens (Temporary, use a DB in production)
+let refreshTokensDB = new Set();
 
 /**
  * ✅ Generate an Access Token (Short-lived)
@@ -32,7 +31,7 @@ const generateAccessToken = (user) => {
   return jwt.sign(
     { id: user._id, phone: user.phone },
     accessTokenSecret,
-    { expiresIn: '15m' } // 15 minutes
+    { expiresIn: '15m' } // Short expiry for security
   );
 };
 
@@ -43,14 +42,14 @@ const generateRefreshToken = (user) => {
   const refreshToken = jwt.sign(
     { id: user._id, phone: user.phone },
     refreshTokenSecret,
-    { expiresIn: '7d' } // 7 days
+    { expiresIn: '7d' } // Longer expiry for refresh
   );
-  refreshTokensDB.add(refreshToken); // Store token
+  refreshTokensDB.add(refreshToken);
   return refreshToken;
 };
 
 /**
- * ✅ Middleware to verify the Access Token
+ * ✅ Middleware: Verify Access Token
  */
 const authenticateUser = (req, res, next) => {
   const authHeader = req.header('Authorization');
@@ -62,7 +61,7 @@ const authenticateUser = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, accessTokenSecret);
-    req.user = decoded;
+    req.user = decoded; // Attach user info
     next();
   } catch (error) {
     return res.status(403).json({ message: 'Invalid or expired access token' });
@@ -71,9 +70,8 @@ const authenticateUser = (req, res, next) => {
 
 /**
  * ✅ Refresh Token Endpoint
- * Exchange refresh token for a new access token
  */
-const refreshToken = (req, res) => {
+const refreshAccessToken = (req, res) => {
   const { token } = req.body;
   if (!token) return res.status(401).json({ message: 'Refresh token required' });
 
@@ -84,6 +82,7 @@ const refreshToken = (req, res) => {
   try {
     const decoded = jwt.verify(token, refreshTokenSecret);
     const newAccessToken = generateAccessToken({ _id: decoded.id, phone: decoded.phone });
+
     res.json({ accessToken: newAccessToken });
   } catch (error) {
     return res.status(403).json({ message: 'Invalid or expired refresh token' });
@@ -95,14 +94,20 @@ const refreshToken = (req, res) => {
  */
 const logout = (req, res) => {
   const { token } = req.body;
-  refreshTokensDB.delete(token);
-  res.json({ message: 'Logged out successfully' });
+  if (!token) return res.status(400).json({ message: 'Refresh token required' });
+
+  if (refreshTokensDB.has(token)) {
+    refreshTokensDB.delete(token);
+    return res.json({ message: 'Logged out successfully' });
+  } else {
+    return res.status(400).json({ message: 'Invalid refresh token' });
+  }
 };
 
 module.exports = {
   authenticateUser,
   generateAccessToken,
   generateRefreshToken,
-  refreshToken,
+  refreshAccessToken,
   logout,
 };

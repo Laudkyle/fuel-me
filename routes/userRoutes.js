@@ -7,7 +7,7 @@ const {
   updateUser,
   deleteUser,
 } = require('../controllers/userController');
-const { authenticateUser, refreshAccessToken } = require('../middlewares/auth'); 
+const { authenticateUser, refreshAccessToken } = require('../middlewares/auth');
 
 const router = express.Router();
 
