@@ -1,5 +1,5 @@
 const { User } = require('../models');
-const { generateToken } = require('../middlewares/auth');
+const { generateAccessToken, generateRefreshToken } = require('../middlewares/auth');
 const { hashPassword, comparePassword } = require('../utils/hash');
 
 // Get all users
@@ -41,8 +41,11 @@ const registerUser = async (req, res) => {
 
     await newUser.save();
 
-    const token = generateToken(newUser);
-    res.status(201).json({ user: newUser, token });
+    // Generate access and refresh tokens
+    const accessToken = generateAccessToken(newUser);
+    const refreshToken = generateRefreshToken(newUser);
+
+    res.status(201).json({ user: newUser, accessToken, refreshToken });
   } catch (error) {
     res.status(500).json({ message: 'Failed to create user', error: error.message });
   }
@@ -63,8 +66,11 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const token = generateToken(user);
-    res.status(200).json({ user, token });
+    // Generate new tokens
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    res.status(200).json({ user, accessToken, refreshToken });
   } catch (error) {
     res.status(500).json({ message: 'Failed to login', error: error.message });
   }
