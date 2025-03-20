@@ -1,25 +1,24 @@
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 
-// Users
 const UserSchema = new mongoose.Schema({
   user_uuid: { type: String, required: true, unique: true, default: uuidv4 },
-  phone: { type: String, required: true },
-  password: { type: String, required: true },
+  phone: { type: String, required: true, unique: true },
+  pin: { type: String, required: true }, 
 });
 
-// Profiles
 const ProfileSchema = new mongoose.Schema({
   user_uuid: { type: String, ref: 'User', required: true },
   profile_uuid: { type: String, required: true, unique: true, default: uuidv4 },
-  fullname: { type: String, required: true },
-  staff_id: { type: String },
+  name: { type: String, required: true }, // Changed from fullname to match frontend
   address: { type: String },
   email: { type: String },
   category: { type: String },
-  id_image1: { type: String },
-  id_image2: { type: String },
-  personal_image: { type: String },
+  staff_id: { type: String }, // Kept for Civil Work category
+  company_id: { type: String }, // Added for Corporate Worker category
+  id_image1: { type: String }, // idFront in frontend
+  id_image2: { type: String }, // idBack in frontend
+  personal_image: { type: String }, // selfie in frontend
   date_created: { type: Date, default: Date.now },
   date_modified: { type: Date },
   date_deleted: { type: Date },

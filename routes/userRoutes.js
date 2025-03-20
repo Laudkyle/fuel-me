@@ -2,7 +2,7 @@ const express = require('express');
 const {
   getUsers,
   getUserByPhone,
-  registerUser,
+  registerUsers,
   loginUser,
   updateUser,
   deleteUser,
@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.get('/', authenticateUser, getUsers);
 router.get('/:phone', authenticateUser, getUserByPhone);
-router.post('/register', registerUser);
+router.post('/register', registerUsers);
 router.post('/login', loginUser);
 router.post('/refresh-token', refreshAccessToken); 
 router.put('/:phone', authenticateUser, updateUser);

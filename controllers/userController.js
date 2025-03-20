@@ -28,7 +28,7 @@ const getUserByPhone = async (req, res) => {
 
 // Register a new user
 const registerUser = async (req, res) => {
-  const { phone, password } = req.body;
+  const { phone, pin } = req.body;
 
   try {
     const userExists = await User.findOne({ phone });
@@ -36,8 +36,8 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const hashedPassword = await hashPassword(password);
-    const newUser = new User({ phone, password: hashedPassword });
+    const hashedPassword = await hashPassword(pin);
+    const newUser = new User({ phone, pin: hashedPassword });
 
     await newUser.save();
 
@@ -50,10 +50,63 @@ const registerUser = async (req, res) => {
     res.status(500).json({ message: 'Failed to create user', error: error.message });
   }
 };
+// Register User and Create Profile
+const registerUsers = async (req, res) => {
+  const { user, profile } = req.body;
 
+  try {
+    // Check if the user already exists
+    const userExists = await User.findOne({ phone: user.phone });
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    // Hash the PIN before storing
+    const hashedPin = await bcrypt.hash(user.pin, 10);
+
+    // Create a new user
+    const newUser = new User({
+      user_uuid: uuidv4(),
+      phone: user.phone,
+      pin: hashedPin, // Store hashed PIN as password
+    });
+
+    await newUser.save();
+
+    // Create a profile for the user
+    const newProfile = new Profile({
+      user_uuid: newUser.user_uuid,
+      profile_uuid: uuidv4(),
+      fullname: profile.name,
+      staff_id: profile.staff_id || "",
+      address: profile.address || "",
+      email: profile.email || "",
+      category: profile.category || "",
+      id_image1: profile.id_image1 || "",
+      id_image2: profile.id_image2 || "",
+      personal_image: profile.personal_image || "",
+    });
+
+    await newProfile.save();
+
+    // Generate JWT tokens
+    const accessToken = generateAccessToken(newUser);
+    const refreshToken = generateRefreshToken(newUser);
+
+    res.status(201).json({
+      message: "Registration successful",
+      user: newUser,
+      profile: newProfile,
+      accessToken,
+      refreshToken,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to register user", error: error.message });
+  }
+};
 // Login user
 const loginUser = async (req, res) => {
-  const { phone, password } = req.body;
+  const { phone, pin } = req.body;
 
   try {
     const user = await User.findOne({ phone });
@@ -61,7 +114,7 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const isMatch = await comparePassword(password, user.password);
+    const isMatch = await comparePassword(pin, user.pin);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -82,8 +135,8 @@ const updateUser = async (req, res) => {
   const updates = req.body;
 
   try {
-    if (updates.password) {
-      updates.password = await hashPassword(updates.password);
+    if (updates.pin) {
+      updates.pin = await hashPassword(updates.pin);
     }
 
     const updatedUser = await User.findOneAndUpdate({ phone }, updates, {
@@ -120,6 +173,7 @@ const deleteUser = async (req, res) => {
 module.exports = {
   getUsers,
   getUserByPhone,
+  registerUsers,
   registerUser,
   loginUser,
   updateUser,
