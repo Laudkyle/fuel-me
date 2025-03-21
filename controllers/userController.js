@@ -1,4 +1,4 @@
-const { User } = require('../models');
+const { User, Profile } = require('../models');
 const { generateAccessToken, generateRefreshToken } = require('../middlewares/auth');
 const { hashPassword, comparePassword } = require('../utils/hash');
 const bcrypt = require("bcryptjs");
