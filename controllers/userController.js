@@ -2,6 +2,8 @@ const { User } = require('../models');
 const { generateAccessToken, generateRefreshToken } = require('../middlewares/auth');
 const { hashPassword, comparePassword } = require('../utils/hash');
 const bcrypt = require("bcryptjs");
+const { v4: uuidv4 } = require("uuid"); // Corrected import
+
 
 // Get all users
 const getUsers = async (req, res) => {

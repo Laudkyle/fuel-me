@@ -1,6 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
+const { v4: uuidv4 } = require("uuid"); // Corrected import
+
 // Import Routes
 const userRoutes = require("./routes/userRoutes");
 const profileRoutes = require("./routes/profileRoutes");
