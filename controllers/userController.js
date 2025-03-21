@@ -80,7 +80,7 @@ const registerUsers = async (req, res) => {
     const newProfile = new Profile({
       user_uuid: newUser.user_uuid,
       profile_uuid: uuidv4(),
-      fullname: profile.name,
+      name: profile.name,
       staff_id: profile.staff_id || "",
       address: profile.address || "",
       email: profile.email || "",
