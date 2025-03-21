@@ -107,28 +107,35 @@ const registerUsers = async (req, res) => {
     res.status(500).json({ message: "Failed to register user", error: error.message });
   }
 };
-// Login user
 const loginUser = async (req, res) => {
   const { phone, pin } = req.body;
 
   try {
+    // Find user by phone
     const user = await User.findOne({ phone });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    // Compare PINs
     const isMatch = await comparePassword(pin, user.pin);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Fetch the user's profile
+    const profile = await Profile.findOne({ user_uuid: user.user_uuid });
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
     }
 
     // Generate new tokens
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    res.status(200).json({ user, accessToken, refreshToken });
+    res.status(200).json({ user, profile, accessToken, refreshToken });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to login', error: error.message });
+    res.status(500).json({ message: "Failed to login", error: error.message });
   }
 };
 
