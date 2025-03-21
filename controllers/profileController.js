@@ -54,7 +54,7 @@ const createProfile = async (req, res) => {
     const newProfile = new Profile({
       user_uuid: user.user_uuid,
       profile_uuid,
-      fullname,
+      name,
       staff_id,
       address,
       email,
