@@ -13,6 +13,8 @@ router.get('/', authenticateUser, StationController.getAllStations);
 // Get a specific station by UUID
 router.get('/:station_uuid', authenticateUser, StationController.getStationByUUID);
 
+router.get('/:code', authenticateUser, StationController.getStationByCode);
+
 // Update a station
 router.put('/:station_uuid', authenticateUser, StationController.updateStation);
 

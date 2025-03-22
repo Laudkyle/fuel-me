@@ -54,6 +54,7 @@ const StationSchema = new mongoose.Schema({
   station_uuid: { type: String, required: true, unique: true, default: uuidv4 },
   agent_uuid: [{ type: String, ref: 'Agent' }],
   location: { type: String },
+  code: { type: String },
   bank_uuid: { type: String, ref: 'Bank' },
   date_created: { type: Date, default: Date.now },
   date_modified: { type: Date },
