@@ -75,6 +75,7 @@ const BankSchema = new mongoose.Schema({
 const RequestSchema = new mongoose.Schema({
   request_uuid: { type: String, required: true, unique: true, default: uuidv4 },
   user_uuid: { type: String, ref: 'User', required: true },
+  fuel: { type: Number, required: true },
   amount: { type: Number, required: true },
   station_uuid: { type: String, ref: 'Station' },
   datetime: { type: Date, default: Date.now },
