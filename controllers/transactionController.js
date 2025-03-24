@@ -1,14 +1,15 @@
-const {Transaction} = require('../models');
+const { Transaction } = require('../models');
+const { v4: uuidv4 } = require('uuid');
 
 // Create a new transaction
 exports.createTransaction = async (req, res) => {
   try {
-    const { user_uuid, loan_uuid, transaction_uuid, amount, type } = req.body;
+    const { user_uuid, loan_uuid, amount, type } = req.body;
 
     const newTransaction = new Transaction({
+      transaction_uuid: uuidv4(),
       user_uuid,
       loan_uuid,
-      transaction_uuid,
       amount,
       type,
     });

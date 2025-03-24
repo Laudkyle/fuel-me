@@ -1,16 +1,17 @@
-const {Momo} = require('../models');
+const { v4: uuidv4 } = require('uuid');
+const { Momo } = require('../models');
 
 // Create a new momo account
 exports.createMomo = async (req, res) => {
   try {
-    const { user_uuid, vendor, name, phone, momo_uuid } = req.body;
+    const { user_uuid, vendor, name, phone } = req.body;
 
     const newMomo = new Momo({
+      momo_uuid: uuidv4(), // Generate UUID automatically
       user_uuid,
       vendor,
       name,
       phone,
-      momo_uuid,
     });
 
     await newMomo.save();

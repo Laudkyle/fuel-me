@@ -1,12 +1,13 @@
-const {Bank} = require('../models');
+const { v4: uuidv4 } = require('uuid');
+const { Bank } = require('../models');
 
 // Create a new bank
 exports.createBank = async (req, res) => {
   try {
-    const { bank_uuid, bank_name, account_number, location } = req.body;
+    const { bank_name, account_number, location } = req.body;
 
     const newBank = new Bank({
-      bank_uuid,
+      bank_uuid: uuidv4(), // Generate UUID automatically
       bank_name,
       account_number,
       location,

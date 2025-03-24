@@ -1,12 +1,13 @@
-const {Loan }= require('../models');
+const { v4: uuidv4 } = require('uuid');
+const { Loan } = require('../models');
 
 // Create a new loan
 exports.createLoan = async (req, res) => {
   try {
-    const { loan_uuid, user_uuid, amount, agent_uuid, car_uuid, status } = req.body;
+    const { user_uuid, amount, agent_uuid, car_uuid, status } = req.body;
 
     const newLoan = new Loan({
-      loan_uuid,
+      loan_uuid: uuidv4(), // Generate UUID automatically
       user_uuid,
       amount,
       balance: amount, // Initial balance is the loan amount

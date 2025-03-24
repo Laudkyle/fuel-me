@@ -1,12 +1,13 @@
-const {Station} = require('../models');
+const { v4: uuidv4 } = require('uuid');
+const { Station } = require('../models');
 
 // Create a new station
 exports.createStation = async (req, res) => {
   try {
-    const { station_uuid, code, agent_uuid, location, bank_uuid } = req.body;
+    const { code, agent_uuid, location, bank_uuid } = req.body;
 
     const newStation = new Station({
-      station_uuid,
+      station_uuid: uuidv4(), // Generate UUID automatically
       agent_uuid,
       code,
       location,
@@ -59,11 +60,11 @@ exports.getStationByCode = async (req, res) => {
 // Update a station
 exports.updateStation = async (req, res) => {
   try {
-    const { location,code, bank_uuid } = req.body;
+    const { location, code, bank_uuid } = req.body;
 
     const updatedStation = await Station.findOneAndUpdate(
       { station_uuid: req.params.station_uuid },
-      { location,code, bank_uuid, date_modified: Date.now() },
+      { location, code, bank_uuid, date_modified: Date.now() },
       { new: true }
     );
 

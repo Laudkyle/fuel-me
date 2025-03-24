@@ -1,12 +1,13 @@
-const {RepaymentSchedule }= require('../models');
+const { v4: uuidv4 } = require('uuid');
+const { RepaymentSchedule } = require('../models');
 
 // Create a new repayment schedule
 exports.createRepaymentSchedule = async (req, res) => {
   try {
-    const { repayment_schedule_uuid, loan_uuid, due_date, repayment_frequency, total_amount_due, status } = req.body;
+    const { loan_uuid, due_date, repayment_frequency, total_amount_due, status } = req.body;
 
     const newRepaymentSchedule = new RepaymentSchedule({
-      repayment_schedule_uuid,
+      repayment_schedule_uuid: uuidv4(), // Generate UUID automatically
       loan_uuid,
       due_date,
       repayment_frequency,

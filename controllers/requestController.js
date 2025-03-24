@@ -1,12 +1,13 @@
-const {Request} = require('../models');
+const { v4: uuidv4 } = require('uuid');
+const { Request } = require('../models');
 
 // Create a new request
 exports.createRequest = async (req, res) => {
   try {
-    const { request_uuid, user_uuid,fuel, amount, station_uuid, car_uuid, agent_uuid, status } = req.body;
+    const { user_uuid, fuel, amount, station_uuid, car_uuid, agent_uuid, status } = req.body;
 
     const newRequest = new Request({
-      request_uuid,
+      request_uuid: uuidv4(), // Generate UUID automatically
       user_uuid,
       fuel,
       amount,
@@ -49,11 +50,11 @@ exports.getRequestByUUID = async (req, res) => {
 // Update a request
 exports.updateRequest = async (req, res) => {
   try {
-    const { fuel,amount, status, station_uuid, car_uuid, agent_uuid } = req.body;
+    const { fuel, amount, status, station_uuid, car_uuid, agent_uuid } = req.body;
 
     const updatedRequest = await Request.findOneAndUpdate(
       { request_uuid: req.params.request_uuid },
-      { fuel,amount, status, station_uuid, car_uuid, agent_uuid, date_modified: Date.now() },
+      { fuel, amount, status, station_uuid, car_uuid, agent_uuid, date_modified: Date.now() },
       { new: true }
     );
 

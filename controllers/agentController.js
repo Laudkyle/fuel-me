@@ -1,10 +1,11 @@
+const { v4: uuidv4 } = require('uuid');
 const { Agent, User } = require('../models');
 const { authenticateUser } = require('../middlewares/auth'); // Import authentication middleware
 
 // Create a new agent
 exports.createAgent = async (req, res) => {
   try {
-    const { station_uuid, agent_uuid, fullname, transaction_pin } = req.body;
+    const { station_uuid, fullname, transaction_pin } = req.body;
 
     // Ensure the user exists based on the authenticated user (JWT)
     const user_uuid = req.user.id; // Get user ID from token
@@ -17,7 +18,7 @@ exports.createAgent = async (req, res) => {
     const newAgent = new Agent({
       user_uuid,
       station_uuid,
-      agent_uuid,
+      agent_uuid: uuidv4(), // Generate UUID automatically
       fullname,
       transaction_pin,
     });

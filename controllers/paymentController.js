@@ -1,14 +1,15 @@
-const {Payment} = require('../models');
+const { v4: uuidv4 } = require('uuid');
+const { Payment } = require('../models');
 
 // Create a new payment
 exports.createPayment = async (req, res) => {
   try {
-    const { loan_uuid, amount, payment_uuid } = req.body;
+    const { loan_uuid, amount } = req.body;
 
     const newPayment = new Payment({
+      payment_uuid: uuidv4(), // Generate UUID automatically
       loan_uuid,
       amount,
-      payment_uuid,
     });
 
     await newPayment.save();

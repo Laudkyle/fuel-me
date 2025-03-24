@@ -1,13 +1,14 @@
-const {Card }= require('../models');
+const { v4: uuidv4 } = require('uuid');
+const { Card } = require('../models');
 
 // Create a new card
 exports.createCard = async (req, res) => {
   try {
-    const { user_uuid, card_uuid, card_number, expiry_date, cvc, name } = req.body;
+    const { user_uuid, card_number, expiry_date, cvc, name } = req.body;
 
     const newCard = new Card({
       user_uuid,
-      card_uuid,
+      card_uuid: uuidv4(), // Generate UUID automatically
       card_number,
       expiry_date,
       cvc,

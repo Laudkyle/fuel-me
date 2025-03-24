@@ -1,3 +1,4 @@
+const { v4: uuidv4 } = require('uuid');
 const { User, Profile } = require('../models');
 
 // Get all profiles
@@ -15,13 +16,11 @@ const getProfileByPhone = async (req, res) => {
   const { phone } = req.params;
 
   try {
-    // Find the user by phone
     const user = await User.findOne({ phone });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Find the profile by user_uuid
     const profile = await Profile.findOne({ user_uuid: user.user_uuid });
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
@@ -38,23 +37,20 @@ const createProfile = async (req, res) => {
   const { phone, profile_uuid, fullname, staff_id, address, email, category, id_image1, id_image2, personal_image } = req.body;
 
   try {
-    // Find the user by phone
     const user = await User.findOne({ phone });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Check if a profile already exists for the user
     const existingProfile = await Profile.findOne({ user_uuid: user.user_uuid });
     if (existingProfile) {
       return res.status(400).json({ message: 'Profile already exists for this user' });
     }
 
-    // Create a new profile
     const newProfile = new Profile({
       user_uuid: user.user_uuid,
-      profile_uuid,
-      name,
+      profile_uuid: uuidv4(),
+      fullname,
       staff_id,
       address,
       email,
@@ -77,13 +73,11 @@ const updateProfile = async (req, res) => {
   const updates = req.body;
 
   try {
-    // Find the user by phone
     const user = await User.findOne({ phone });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Update the profile by user_uuid
     const updatedProfile = await Profile.findOneAndUpdate({ user_uuid: user.user_uuid }, updates, { new: true });
 
     if (!updatedProfile) {
@@ -101,13 +95,11 @@ const deleteProfile = async (req, res) => {
   const { phone } = req.params;
 
   try {
-    // Find the user by phone
     const user = await User.findOne({ phone });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Delete the profile by user_uuid
     const deletedProfile = await Profile.findOneAndDelete({ user_uuid: user.user_uuid });
 
     if (!deletedProfile) {

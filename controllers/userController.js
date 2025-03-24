@@ -2,8 +2,7 @@ const { User, Profile } = require('../models');
 const { generateAccessToken, generateRefreshToken } = require('../middlewares/auth');
 const { hashPassword, comparePassword } = require('../utils/hash');
 const bcrypt = require("bcryptjs");
-const { v4: uuidv4 } = require("uuid"); // Corrected import
-
+const { v4: uuidv4 } = require("uuid");
 
 // Get all users
 const getUsers = async (req, res) => {
@@ -40,11 +39,14 @@ const registerUser = async (req, res) => {
     }
 
     const hashedPassword = await hashPassword(pin);
-    const newUser = new User({ phone, pin: hashedPassword });
+    const newUser = new User({
+      user_uuid: uuidv4(), // Generate UUID manually
+      phone,
+      pin: hashedPassword
+    });
 
     await newUser.save();
 
-    // Generate access and refresh tokens
     const accessToken = generateAccessToken(newUser);
     const refreshToken = generateRefreshToken(newUser);
 
@@ -53,30 +55,27 @@ const registerUser = async (req, res) => {
     res.status(500).json({ message: 'Failed to create user', error: error.message });
   }
 };
+
 // Register User and Create Profile
 const registerUsers = async (req, res) => {
   const { user, profile } = req.body;
 
   try {
-    // Check if the user already exists
     const userExists = await User.findOne({ phone: user.phone });
     if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Hash the PIN before storing
     const hashedPin = await bcrypt.hash(user.pin, 10);
 
-    // Create a new user
     const newUser = new User({
       user_uuid: uuidv4(),
       phone: user.phone,
-      pin: hashedPin, // Store hashed PIN as password
+      pin: hashedPin,
     });
 
     await newUser.save();
 
-    // Create a profile for the user
     const newProfile = new Profile({
       user_uuid: newUser.user_uuid,
       profile_uuid: uuidv4(),
@@ -92,7 +91,6 @@ const registerUsers = async (req, res) => {
 
     await newProfile.save();
 
-    // Generate JWT tokens
     const accessToken = generateAccessToken(newUser);
     const refreshToken = generateRefreshToken(newUser);
 
@@ -107,29 +105,27 @@ const registerUsers = async (req, res) => {
     res.status(500).json({ message: "Failed to register user", error: error.message });
   }
 };
+
+// Login user
 const loginUser = async (req, res) => {
   const { phone, pin } = req.body;
 
   try {
-    // Find user by phone
     const user = await User.findOne({ phone });
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Compare PINs
     const isMatch = await comparePassword(pin, user.pin);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Fetch the user's profile
     const profile = await Profile.findOne({ user_uuid: user.user_uuid });
     if (!profile) {
       return res.status(404).json({ message: "Profile not found" });
     }
 
-    // Generate new tokens
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 

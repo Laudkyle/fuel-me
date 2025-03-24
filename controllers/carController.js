@@ -1,9 +1,10 @@
-const {Car,User} = require('../models');
+const { v4: uuidv4 } = require('uuid');
+const { Car, User } = require('../models');
 
 // Create a new car
 exports.createCar = async (req, res) => {
   try {
-    const { user_uuid, car_uuid, car_model, car_number, fuel_type, picture } = req.body;
+    const { user_uuid, car_model, car_number, fuel_type, picture } = req.body;
 
     // Ensure the user exists
     const user = await User.findOne({ user_uuid });
@@ -13,7 +14,7 @@ exports.createCar = async (req, res) => {
 
     const newCar = new Car({
       user_uuid,
-      car_uuid,
+      car_uuid: uuidv4(), // Generate UUID automatically
       car_model,
       car_number,
       fuel_type,
