@@ -5,7 +5,7 @@ const { authenticateUser } = require('../middlewares/auth'); // Import authentic
 // Create a new agent
 exports.createAgent = async (req, res) => {
   try {
-    const { station_uuid, fullname, transaction_pin } = req.body;
+    const { station_uuid, fullname,phone, transaction_pin } = req.body;
 
     // Ensure the user exists based on the authenticated user (JWT)
     const user_uuid = req.user.id; // Get user ID from token
@@ -20,6 +20,7 @@ exports.createAgent = async (req, res) => {
       station_uuid,
       agent_uuid: uuidv4(), // Generate UUID automatically
       fullname,
+      phone,
       transaction_pin,
     });
 

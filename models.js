@@ -30,6 +30,7 @@ const AgentSchema = new mongoose.Schema({
   station_uuid: { type: String, ref: 'Station' },
   agent_uuid: { type: String, required: true, unique: true, default: uuidv4 },
   fullname: { type: String, required: true },
+  phone: { type: String, required: true },
   transaction_pin: { type: String },
   date_created: { type: Date, default: Date.now },
   date_modified: { type: Date },
