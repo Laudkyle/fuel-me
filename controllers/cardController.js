@@ -5,10 +5,12 @@ const { Card, User } = require("../models"); // Ensure User model is imported
 exports.createCard = async (req, res) => {
   try {
     const { phone_number, card_number, expiry_date, cvc, name } = req.body;
+    console.log(req.body)
 
     // Find the user based on phone number
     const user = await User.findOne({ phone_number });
     if (!user) {
+      console.log('user not found')
       return res.status(404).json({ message: "User not found with this phone number" });
     }
 
