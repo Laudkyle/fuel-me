@@ -5,7 +5,7 @@ const router = express.Router();
 const CardController = require('../controllers/cardController');
 
 // Create a new card
-router.post('/', authenticateUser, CardController.createCard);
+router.post('/create', authenticateUser, CardController.createCard);
 
 // Get all cards
 router.get('/', authenticateUser, CardController.getAllCards);
