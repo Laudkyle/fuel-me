@@ -4,16 +4,16 @@ const { Car, User } = require('../models');
 // Create a new car
 exports.createCar = async (req, res) => {
   try {
-    const { user_uuid, car_model, car_number, fuel_type, picture } = req.body;
+    const { phone_number, car_model, car_number, fuel_type, picture } = req.body;
 
-    // Ensure the user exists
-    const user = await User.findOne({ user_uuid });
+    // Find user by phone number
+    const user = await User.findOne({ phone: phone_number });
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found with this phone number' });
     }
 
     const newCar = new Car({
-      user_uuid,
+      user_uuid: user.user_uuid, // Get user UUID from the database
       car_uuid: uuidv4(), // Generate UUID automatically
       car_model,
       car_number,
