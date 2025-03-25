@@ -8,7 +8,7 @@ exports.createCard = async (req, res) => {
     console.log(req.body)
 
     // Find the user based on phone number
-    const user = await User.findOne({ phone_number });
+    const user = await User.findOne({ phone:phone_number });
     if (!user) {
       console.log('user not found')
       return res.status(404).json({ message: "User not found with this phone number" });
