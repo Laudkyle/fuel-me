@@ -7,7 +7,7 @@ exports.createMomo = async (req, res) => {
     const { user_uuid, vendor, name, phone } = req.body;
 
     const newMomo = new Momo({
-      momo_uuid: uuidv4(), // Generate UUID automatically
+      momo_uuid: uuidv4(), 
       user_uuid,
       vendor,
       name,
