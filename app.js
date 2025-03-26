@@ -18,7 +18,7 @@ const momoRoutes = require("./routes/momoRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 const loanRoutes = require("./routes/loanRoutes");
 const repaymentScheduleRoutes = require("./routes/repaymentScheduleRoutes");
-
+const dashboardRoutes = require("./routes/dashboardRoutes");
 // Database connection
 const connectDB = require("./config/db");
 
@@ -44,6 +44,7 @@ app.use("/api/momo", momoRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/loans", loanRoutes);
 app.use("/api/repaymentSchedules", repaymentScheduleRoutes);
+app.use("/api/dashboard",dashboardRoutes)
 
 // Connect to the Database
 connectDB();
