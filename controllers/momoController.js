@@ -43,6 +43,21 @@ exports.getMomoByUUID = async (req, res) => {
     res.status(500).json({ message: 'Error retrieving momo account', error: error.message });
   }
 };
+// Get all cards of a specific user by user_uuid
+exports.getUserMomo = async (req, res) => {
+  try {
+    const { user_uuid } = req.params; // Extract user_uuid from request params
+
+    const momos = await Momo.find({ user_uuid }); // Find all cards for this user
+    if (momos.length === 0) {
+      return res.status(404).json({ message: "No cards found for this user" });
+    }
+
+    res.status(200).json(momos);
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving cards", error: error.message });
+  }
+};
 
 // Update a momo account
 exports.updateMomo = async (req, res) => {

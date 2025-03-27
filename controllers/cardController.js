@@ -51,6 +51,22 @@ exports.getCardByUUID = async (req, res) => {
     res.status(500).json({ message: "Error retrieving card", error: error.message });
   }
 };
+// Get all cards of a specific user by user_uuid
+exports.getUserCards = async (req, res) => {
+  try {
+    const { user_uuid } = req.params; // Extract user_uuid from request params
+
+    const cards = await Card.find({ user_uuid }); // Find all cards with the given user_uuid
+
+    if (!cards.length) {
+      return res.status(404).json({ message: "No cards found for this user" });
+    }
+
+    res.status(200).json(cards);
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving user cards", error: error.message });
+  }
+};
 
 // Update a card
 exports.updateCard = async (req, res) => {

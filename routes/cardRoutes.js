@@ -9,6 +9,8 @@ router.post('/create', authenticateUser, CardController.createCard);
 
 // Get all cards
 router.get('/', authenticateUser, CardController.getAllCards);
+// Get all cards of a specific user
+router.get('/user/:user_uuid', authenticateUser, CardController.getUserCards);
 
 // Get a specific card by UUID
 router.get('/:card_uuid', authenticateUser, CardController.getCardByUUID);

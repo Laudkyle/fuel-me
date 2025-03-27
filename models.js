@@ -50,18 +50,20 @@ const CarSchema = new mongoose.Schema({
   date_deleted: { type: Date },
 });
 
-// Stations
 const StationSchema = new mongoose.Schema({
   station_uuid: { type: String, required: true, unique: true, default: uuidv4 },
-  agent_uuid: [{ type: String, ref: 'Agent' }],
+  agent_uuid: [{ type: String, ref: "Agent" }],
   location: { type: String },
   code: { type: String },
   name: { type: String },
-  bank_uuid: { type: String, ref: 'Bank' },
+  bank_uuid: { type: String, ref: "Bank" },
+  latitude: { type: Number},  
+  longitude: { type: Number}, 
   date_created: { type: Date, default: Date.now },
   date_modified: { type: Date },
   date_deleted: { type: Date },
 });
+
 
 // Banks
 const BankSchema = new mongoose.Schema({
