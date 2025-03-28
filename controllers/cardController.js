@@ -4,17 +4,11 @@ const { Card, User } = require("../models"); // Ensure User model is imported
 // Create a new card
 exports.createCard = async (req, res) => {
   try {
-    const { phone_number, card_number, expiry_date, cvc, name } = req.body;
-
-    // Find the user based on phone number
-    const user = await User.findOne({ phone:phone_number });
-    if (!user) {
-      return res.status(404).json({ message: "User not found with this phone number" });
-    }
+    const { user_uuid, card_number, expiry_date, cvc, name } = req.body;
 
     // Create new card with user's UUID
     const newCard = new Card({
-      user_uuid: user.user_uuid, // Get user UUID from database
+      user_uuid: user_uuid, 
       card_uuid: uuidv4(), // Generate UUID automatically
       card_number,
       expiry_date,
