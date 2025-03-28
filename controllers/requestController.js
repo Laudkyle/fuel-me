@@ -25,6 +25,22 @@ exports.createRequest = async (req, res) => {
   }
 };
 
+// Get all requests for a specific user
+exports.getUserRequests = async (req, res) => {
+  try {
+    const { user_uuid } = req.params;
+
+    const userRequests = await Request.find({ user_uuid });
+
+    if (userRequests.length === 0) {
+      return res.status(404).json({ message: 'No requests found for this user' });
+    }
+
+    res.status(200).json(userRequests);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching user requests', error: error.message });
+  }
+};
 // Get all requests
 exports.getAllRequests = async (req, res) => {
   try {

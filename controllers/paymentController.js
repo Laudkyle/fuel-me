@@ -1,6 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
-const { Payment } = require('../models');
-
+const { Payment, Loan } = require('../models');
 // Create a new payment
 exports.createPayment = async (req, res) => {
   try {
@@ -18,6 +17,36 @@ exports.createPayment = async (req, res) => {
     res.status(500).json({ message: 'Error creating payment', error: error.message });
   }
 };
+
+// Get all payments for a specific user
+exports.getUserPayments = async (req, res) => {
+  try {
+    const { user_uuid } = req.params;
+
+    // Find loans associated with the user
+    const userLoans = await Loan.find({ user_uuid }).select('loan_uuid');
+
+    if (userLoans.length === 0) {
+      return res.status(404).json({ message: 'No loans found for this user' });
+    }
+
+    // Extract loan UUIDs
+    const loanUUIDs = userLoans.map((loan) => loan.loan_uuid);
+
+    // Find payments for the user's loans
+    const userPayments = await Payment.find({ loan_uuid: { $in: loanUUIDs } });
+
+    if (userPayments.length === 0) {
+      return res.status(404).json({ message: 'No payments found for this user' });
+    }
+
+    res.status(200).json(userPayments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching user payments', error: error.message });
+  }
+};
+
+
 
 // Get all payments
 exports.getAllPayments = async (req, res) => {

@@ -9,6 +9,8 @@ router.post('/create', carController.createCar);
 
 // Get all cars
 router.get('/', authenticateUser, carController.getAllCars);
+// Get all user cars
+router.get('/user/:user_uuid', authenticateUser, carController.getUserCars);
 
 // Get a single car by car_uuid
 router.get('/:car_uuid', authenticateUser, carController.getCarById);

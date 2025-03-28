@@ -9,6 +9,8 @@ router.post('/', LoanController.createLoan);
 
 // Get all loans
 router.get('/', LoanController.getAllLoans);
+// Get all user loans
+router.get('/user/:user_uuid', LoanController.getUserLoans);
 
 // Get a specific loan by UUID
 router.get('/:loan_uuid', authenticateUser, LoanController.getLoanByUUID);

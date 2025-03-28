@@ -12,7 +12,7 @@ router.get('/', authenticateUser, TransactionController.getAllTransactions);
 
 // Get a specific transaction by UUID
 router.get('/:transaction_uuid', authenticateUser, TransactionController.getTransactionByUUID);
-
+router.get('/user/:user_uuid', getUserTransactions);
 // Update a transaction
 router.put('/:transaction_uuid', authenticateUser, TransactionController.updateTransaction);
 

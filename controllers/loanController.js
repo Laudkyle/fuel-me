@@ -46,6 +46,24 @@ exports.getLoanByUUID = async (req, res) => {
   }
 };
 
+// Get all loans for a specific user
+exports.getUserLoans = async (req, res) => {
+  try {
+    const { user_uuid } = req.params;
+
+    // Fetch loans belonging to the user
+    const userLoans = await Loan.find({ user_uuid });
+
+    if (userLoans.length === 0) {
+      return res.status(404).json({ message: 'No loans found for this user' });
+    }
+
+    res.status(200).json(userLoans);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching user loans', error: error.message });
+  }
+};
+
 // Update a loan
 exports.updateLoan = async (req, res) => {
   try {

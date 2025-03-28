@@ -4,7 +4,7 @@ const { Car, User } = require('../models');
 // Create a new car
 exports.createCar = async (req, res) => {
   try {
-    const { user_uuid, car_model, car_number, fuel_type, picture } = req.body;
+    const { user_uuid,transmission, car_model, car_number, fuel_type, picture } = req.body;
 
     // Ensure the user exists
     const user = await User.findOne({ user_uuid });
@@ -17,6 +17,7 @@ exports.createCar = async (req, res) => {
       car_uuid: uuidv4(), // Generate UUID automatically
       car_model,
       car_number,
+      transmission,
       fuel_type,
       picture,
     });
@@ -25,6 +26,24 @@ exports.createCar = async (req, res) => {
     res.status(201).json({ message: 'Car created successfully', car: newCar });
   } catch (error) {
     res.status(500).json({ message: 'Error creating car', error: error.message });
+  }
+};
+
+// Get all cars for a specific user
+exports.getUserCars = async (req, res) => {
+  try {
+    const { user_uuid } = req.params;
+
+    // Fetch cars belonging to the user
+    const userCars = await Car.find({ user_uuid });
+
+    if (userCars.length === 0) {
+      return res.status(404).json({ message: 'No cars found for this user' });
+    }
+
+    res.status(200).json(userCars);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching user cars', error: error.message });
   }
 };
 

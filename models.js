@@ -44,6 +44,7 @@ const CarSchema = new mongoose.Schema({
   car_model: { type: String, required: true },
   car_number: { type: String, required: true },
   fuel_type: { type: String },
+  transmission: { type: String },
   picture: { type: String },
   date_created: { type: Date, default: Date.now },
   date_modified: { type: Date },
