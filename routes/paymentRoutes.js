@@ -16,7 +16,7 @@ router.get(
   authenticateUser,
   PaymentController.getPaymentByUUID
 );
-router.get("/user/:user_uuid", getUserPayments);
+router.get("/user/:user_uuid", authenticateUser,PaymentController.getUserPayments);
 // Update a payment
 router.put("/:payment_uuid", authenticateUser, PaymentController.updatePayment);
 

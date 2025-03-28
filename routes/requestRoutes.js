@@ -10,7 +10,7 @@ router.post('/', authenticateUser, RequestController.createRequest);
 // Get all requests
 router.get('/', authenticateUser, RequestController.getAllRequests);
 
-router.get('/user/:user_uuid', getUserRequests);
+router.get('/user/:user_uuid',authenticateUser, RequestController.getRequestsUser);
 // Get a specific request by UUID
 router.get('/:request_uuid', authenticateUser, RequestController.getRequestByUUID);
 

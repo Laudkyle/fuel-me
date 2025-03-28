@@ -26,7 +26,7 @@ exports.createRequest = async (req, res) => {
 };
 
 // Get all requests for a specific user
-exports.getUserRequests = async (req, res) => {
+exports.getRequestsUser = async (req, res) => {
   try {
     const { user_uuid } = req.params;
 
@@ -41,6 +41,7 @@ exports.getUserRequests = async (req, res) => {
     res.status(500).json({ message: 'Error fetching user requests', error: error.message });
   }
 };
+
 // Get all requests
 exports.getAllRequests = async (req, res) => {
   try {
