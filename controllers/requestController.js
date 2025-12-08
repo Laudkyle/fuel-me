@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
-const { Request, Car } = require('../models'); // Make sure to import Car model
+const { Request, Car } = require('../models');
 
 // Create a new request
 exports.createRequest = async (req, res) => {
@@ -36,7 +36,7 @@ exports.getRequestsUser = async (req, res) => {
     // Populate car details including picture
     const requestsWithCarDetails = await Promise.all(
       userRequests.map(async (request) => {
-        const car = await Car.findOne({ car_uuid: request.car_uuid });
+        const car = await Car.findOne({ car_uuid: request.car_uuid }); // FIXED: use car_uuid
         return {
           ...request.toObject(),
           car_picture: car?.picture || null,
@@ -60,7 +60,7 @@ exports.getAllRequests = async (req, res) => {
     // Populate car details including picture for all requests
     const requestsWithCarDetails = await Promise.all(
       requests.map(async (request) => {
-        const car = await Car.findOne({ car_uuid: request.car_uuid });
+        const car = await Car.findOne({ car_uuid: request.car_uuid }); // FIXED: use car_uuid
         return {
           ...request.toObject(),
           car_picture: car?.picture || null,
@@ -86,7 +86,7 @@ exports.getRequestByUUID = async (req, res) => {
     }
 
     // Get car details
-    const car = await Car.findOne({ car_uuid: request.car_uuid });
+    const car = await Car.findOne({ car_uuid: request.car_uuid }); // FIXED: use car_uuid
     
     const requestWithCarDetails = {
       ...request.toObject(),
@@ -116,7 +116,7 @@ exports.updateRequest = async (req, res) => {
     }
 
     // Get car details
-    const car = await Car.findOne({ car_uuid: updatedRequest.car_uuid });
+    const car = await Car.findOne({ car_uuid: updatedRequest.car_uuid }); // FIXED: use car_uuid and updatedRequest
     
     const requestWithCarDetails = {
       ...updatedRequest.toObject(),
