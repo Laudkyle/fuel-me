@@ -10,9 +10,13 @@ router.post('/', authenticateUser, RequestController.createRequest);
 // Get all requests
 router.get('/', authenticateUser, RequestController.getAllRequests);
 
-router.get('/user/:user_uuid',authenticateUser, RequestController.getRequestsUser);
-// Get a specific request by UUID
+// Get requests by specific status (e.g., /requests/status/pending)
+router.get('/status/:status', authenticateUser, RequestController.getRequestsByStatus);
 
+// Get all requests for a specific user
+router.get('/user/:user_uuid', authenticateUser, RequestController.getRequestsUser);
+
+// Get a specific request by UUID
 router.get('/:request_uuid', authenticateUser, RequestController.getRequestByUUID);
 
 // Update a request

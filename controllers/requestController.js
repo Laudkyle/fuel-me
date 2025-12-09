@@ -36,7 +36,7 @@ exports.getRequestsUser = async (req, res) => {
     // Populate car details including picture
     const requestsWithCarDetails = await Promise.all(
       userRequests.map(async (request) => {
-        const car = await Car.findOne({ car_uuid: request.car_uuid }); // FIXED: use car_uuid
+        const car = await Car.findOne({ car_uuid: request.car_uuid });
         return {
           ...request.toObject(),
           car_picture: car?.picture || null,
@@ -52,6 +52,40 @@ exports.getRequestsUser = async (req, res) => {
   }
 };
 
+// Get requests by specific status
+exports.getRequestsByStatus = async (req, res) => {
+  try {
+    const { status } = req.params;
+    
+    if (!status) {
+      return res.status(400).json({ message: 'Status parameter is required' });
+    }
+
+    const requests = await Request.find({ status });
+    
+    if (requests.length === 0) {
+      return res.status(404).json({ message: `No requests found with status: ${status}` });
+    }
+
+    // Populate car details including picture
+    const requestsWithCarDetails = await Promise.all(
+      requests.map(async (request) => {
+        const car = await Car.findOne({ car_uuid: request.car_uuid });
+        return {
+          ...request.toObject(),
+          car_picture: car?.picture || null,
+          car_model: car?.car_model || null,
+          car_number: car?.car_number || null,
+        };
+      })
+    );
+
+    res.status(200).json(requestsWithCarDetails);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching requests by status', error: error.message });
+  }
+};
+
 // Get all requests
 exports.getAllRequests = async (req, res) => {
   try {
@@ -60,7 +94,7 @@ exports.getAllRequests = async (req, res) => {
     // Populate car details including picture for all requests
     const requestsWithCarDetails = await Promise.all(
       requests.map(async (request) => {
-        const car = await Car.findOne({ car_uuid: request.car_uuid }); // FIXED: use car_uuid
+        const car = await Car.findOne({ car_uuid: request.car_uuid });
         return {
           ...request.toObject(),
           car_picture: car?.picture || null,
@@ -86,7 +120,7 @@ exports.getRequestByUUID = async (req, res) => {
     }
 
     // Get car details
-    const car = await Car.findOne({ car_uuid: request.car_uuid }); // FIXED: use car_uuid
+    const car = await Car.findOne({ car_uuid: request.car_uuid });
     
     const requestWithCarDetails = {
       ...request.toObject(),
@@ -116,7 +150,7 @@ exports.updateRequest = async (req, res) => {
     }
 
     // Get car details
-    const car = await Car.findOne({ car_uuid: updatedRequest.car_uuid }); // FIXED: use car_uuid and updatedRequest
+    const car = await Car.findOne({ car_uuid: updatedRequest.car_uuid });
     
     const requestWithCarDetails = {
       ...updatedRequest.toObject(),
