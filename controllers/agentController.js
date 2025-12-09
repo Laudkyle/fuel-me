@@ -81,7 +81,7 @@ exports.loginAgent = async (req, res) => {
         station_uuid: agent.station_uuid,
         role: 'agent' // Add role for authorization
       },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET ,
       { expiresIn: '24h' } // Token expires in 24 hours
     );
 
