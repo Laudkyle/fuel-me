@@ -49,7 +49,7 @@ const generateRefreshToken = (user) => {
 };
 
 /**
- * ✅ Middleware: Verify Access Token
+ * Middleware: Verify Access Token
  */
 const authenticateUser = (req, res, next) => {
   const authHeader = req.header('Authorization');
