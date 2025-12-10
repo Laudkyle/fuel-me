@@ -1,6 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
 const { Agent, User } = require('../models');
-const { authenticateUser } = require('../middlewares/auth');
 const { generateAccessToken, generateRefreshToken } = require('../middlewares/auth');
 const bcrypt = require("bcryptjs");
 const { comparePassword } = require('../utils/hash');
@@ -27,7 +26,7 @@ exports.createAgent = async (req, res) => {
     const newAgent = new Agent({
       user_uuid,
       station_uuid,
-      agent_uuid: uuidv4(), // Generate UUID automatically
+      agent_uuid: uuidv4(), 
       fullname,
       phone,
       transaction_pin: hashedPin,
