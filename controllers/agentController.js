@@ -8,10 +8,7 @@ const { comparePassword } = require('../utils/hash');
 // Create a new agent
 exports.createAgent = async (req, res) => {
   try {
-    const { station_uuid, fullname, phone, transaction_pin } = req.body;
-
-    // Ensure the user exists based on the authenticated user (JWT)
-    const user_uuid = req.user.id; 
+    const { user_uuid, station_uuid, fullname, phone, transaction_pin } = req.body;
 
     const user = await User.findOne({ _id: user_uuid });
     if (!user) {
