@@ -34,7 +34,7 @@ const getProfileByPhone = async (req, res) => {
 
 // Create a new profile
 const createProfile = async (req, res) => {
-  const { phone, profile_uuid, fullname, staff_id, address, email, category, id_image1, id_image2, personal_image } = req.body;
+  const { phone,  fullname, staff_id, address, email, category, id_image1, id_image2, personal_image } = req.body;
 
   try {
     const user = await User.findOne({ phone });

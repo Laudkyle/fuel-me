@@ -10,7 +10,7 @@ exports.createAgent = async (req, res) => {
   try {
     const { user_uuid, station_uuid, fullname, phone, transaction_pin } = req.body;
 
-    const user = await User.findOne({ _id: user_uuid });
+    const user = await User.findOne({ user_uuid: user_uuid });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
