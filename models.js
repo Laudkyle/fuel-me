@@ -60,6 +60,8 @@ const StationSchema = new mongoose.Schema({
   bank_uuid: { type: String, ref: "Bank" },
   latitude: { type: Number},  
   longitude: { type: Number}, 
+  ppl_diesel: { type: Number,required:true}, 
+  ppl_petrol: { type: Number, required:true}, 
   date_created: { type: Date, default: Date.now },
   date_modified: { type: Date },
   date_deleted: { type: Date },
