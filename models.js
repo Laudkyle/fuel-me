@@ -89,6 +89,7 @@ const RequestSchema = new mongoose.Schema({
   status: { type: String },
   car_uuid: { type: String, ref: 'Car' },
   agent_uuid: { type: String, ref: 'Agent' },
+  decline_reason:{ type: String },
 });
 
 // Payments

@@ -83,14 +83,14 @@ exports.getStationByCode = async (req, res) => {
 // Update a station
 exports.updateStation = async (req, res) => {
   try {
-    const { location, code, bank_uuid } = req.body;
+    const { name,location, longitude,latitude, code, bank_uuid } = req.body;
 
     const updatedStation = await Station.findOneAndUpdate(
       { station_uuid: req.params.station_uuid },
       {
         location,
         longitude,
-        latititude,
+        latitude,
         code,
         name,
         bank_uuid,

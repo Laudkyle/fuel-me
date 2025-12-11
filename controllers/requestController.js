@@ -208,7 +208,7 @@ exports.approveRequest = async (req, res) => {
 exports.declineRequest = async (req, res) => {
   try {
     const { request_uuid } = req.params;
-    const { agent_uuid, decline_reason } = req.body; // Optional: agent and reason
+    const { agent_uuid, decline_reason } = req.body; 
     
     const updatedRequest = await Request.findOneAndUpdate(
       { request_uuid },
