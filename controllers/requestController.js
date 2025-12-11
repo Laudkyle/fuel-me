@@ -16,6 +16,7 @@ exports.createRequest = async (req, res) => {
       agent_uuid,
       status,
     });
+    
     await newRequest.save();
     res.status(201).json({ message: 'Request created successfully', request: newRequest });
   } catch (error) {

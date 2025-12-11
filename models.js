@@ -86,7 +86,7 @@ const RequestSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   station_uuid: { type: String, ref: 'Station' },
   datetime: { type: Date, default: Date.now },
-  status: { type: String },
+  status: { type: String, default:"Pending" },
   car_uuid: { type: String, ref: 'Car' },
   agent_uuid: { type: String, ref: 'Agent' },
   decline_reason:{ type: String },
