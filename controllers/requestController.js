@@ -133,6 +133,167 @@ exports.getRequestsByStatus = async (req, res) => {
     res.status(500).json({ message: 'Error fetching requests by status', error: error.message });
   }
 };
+// Get requests for a specific station with status filter
+exports.getRequestsByStationAndStatus = async (req, res) => {
+  try {
+    const { station_uuid, status } = req.params;
+    
+    if (!station_uuid) {
+      return res.status(400).json({ message: 'Station UUID parameter is required' });
+    }
+
+    // Build query
+    const query = { station_uuid };
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    const requests = await Request.find(query);
+    
+    if (requests.length === 0) {
+      return res.status(404).json({ 
+        message: status 
+          ? `No ${status} requests found for station: ${station_uuid}`
+          : `No requests found for station: ${station_uuid}`,
+        requests: []
+      });
+    }
+
+    // Populate details (same as above)
+    const requestsWithDetails = await Promise.all(
+      requests.map(async (request) => {
+        const car = await Car.findOne({ car_uuid: request.car_uuid });
+        const station = await Station.findOne({ station_uuid: request.station_uuid });
+        const loan = request.status === 'Approved' 
+          ? await Loan.findOne({ user_uuid: request.user_uuid, car_uuid: request.car_uuid })
+          : null;
+        const repaymentSchedule = loan ? await RepaymentSchedule.findOne({ loan_uuid: loan.loan_uuid }) : null;
+        
+        return {
+          ...request.toObject(),
+          car_picture: car?.picture || null,
+          car_model: car?.car_model || null,
+          car_number: car?.car_number || null,
+          station_name: station?.name || null,
+          station_location: station?.location || null,
+          station_latitude: station?.latitude || null,
+          station_longitude: station?.longitude || null,
+          station_code: station?.code || null,
+          loan: loan ? {
+            loan_uuid: loan.loan_uuid,
+            amount: loan.amount,
+            balance: loan.balance,
+            status: loan.status
+          } : null,
+          repayment_schedule: repaymentSchedule ? {
+            repayment_schedule_uuid: repaymentSchedule.repayment_schedule_uuid,
+            due_date: repaymentSchedule.due_date,
+            repayment_frequency: repaymentSchedule.repayment_frequency,
+            total_amount_due: repaymentSchedule.total_amount_due,
+            status: repaymentSchedule.status
+          } : null
+        };
+      })
+    );
+
+    res.status(200).json({
+      station_uuid,
+      status_filter: status || 'all',
+      total_requests: requests.length,
+      requests: requestsWithDetails
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Error fetching requests by station and status', 
+      error: error.message 
+    });
+  }
+};
+// Get all requests for a specific station
+exports.getRequestsByStation = async (req, res) => {
+  try {
+    const { station_uuid } = req.params;
+    
+    if (!station_uuid) {
+      return res.status(400).json({ message: 'Station UUID parameter is required' });
+    }
+
+    // Find all requests for the specified station
+    const requests = await Request.find({ station_uuid });
+    
+    if (requests.length === 0) {
+      return res.status(404).json({ 
+        message: `No requests found for station: ${station_uuid}`,
+        requests: []
+      });
+    }
+
+    // Populate car, station, loan, and repayment schedule details
+    const requestsWithDetails = await Promise.all(
+      requests.map(async (request) => {
+        const car = await Car.findOne({ car_uuid: request.car_uuid });
+        const station = await Station.findOne({ station_uuid: request.station_uuid });
+        const loan = request.status === 'Approved' 
+          ? await Loan.findOne({ user_uuid: request.user_uuid, car_uuid: request.car_uuid })
+          : null;
+        const repaymentSchedule = loan ? await RepaymentSchedule.findOne({ loan_uuid: loan.loan_uuid }) : null;
+        
+        return {
+          ...request.toObject(),
+          car_picture: car?.picture || null,
+          car_model: car?.car_model || null,
+          car_number: car?.car_number || null,
+          station_name: station?.name || null,
+          station_location: station?.location || null,
+          station_latitude: station?.latitude || null,
+          station_longitude: station?.longitude || null,
+          station_code: station?.code || null,
+          loan: loan ? {
+            loan_uuid: loan.loan_uuid,
+            amount: loan.amount,
+            balance: loan.balance,
+            status: loan.status
+          } : null,
+          repayment_schedule: repaymentSchedule ? {
+            repayment_schedule_uuid: repaymentSchedule.repayment_schedule_uuid,
+            due_date: repaymentSchedule.due_date,
+            repayment_frequency: repaymentSchedule.repayment_frequency,
+            total_amount_due: repaymentSchedule.total_amount_due,
+            status: repaymentSchedule.status
+          } : null
+        };
+      })
+    );
+
+    // Get station details for summary
+    const stationDetails = await Station.findOne({ station_uuid });
+    
+    const response = {
+      station_details: {
+        station_uuid: stationDetails?.station_uuid || station_uuid,
+        name: stationDetails?.name || null,
+        location: stationDetails?.location || null,
+        code: stationDetails?.code || null,
+        ppl_diesel: stationDetails?.ppl_diesel || null,
+        ppl_petrol: stationDetails?.ppl_petrol || null,
+      },
+      total_requests: requests.length,
+      requests_by_status: {
+        pending: requests.filter(r => r.status === 'Pending').length,
+        approved: requests.filter(r => r.status === 'Approved').length,
+        declined: requests.filter(r => r.status === 'Declined').length,
+      },
+      requests: requestsWithDetails
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Error fetching requests by station', 
+      error: error.message 
+    });
+  }
+};
 
 // Get all requests
 exports.getAllRequests = async (req, res) => {

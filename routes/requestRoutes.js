@@ -40,6 +40,19 @@ router.get(
   authenticateUser,
   RequestController.getRequestByUUID
 );
+// Get all requests for a specific station
+router.get(
+  "/station/:station_uuid",
+  authenticateUser,
+  RequestController.getRequestsByStation
+);
+
+// Get requests for a specific station with status filter (optional)
+router.get(
+  "/station/:station_uuid/status/:status", 
+  authenticateUser,
+  RequestController.getRequestsByStationAndStatus
+);
 
 // Update a request
 router.put("/:request_uuid", authenticateUser, RequestController.updateRequest);
