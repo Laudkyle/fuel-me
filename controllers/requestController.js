@@ -35,7 +35,7 @@ exports.getRequestsUser = async (req, res) => {
     const { user_uuid } = req.params;
     const userRequests = await Request.find({ user_uuid });
     
-    if (userRequests.length === 0) {
+    if (userRequests.length == 0) {
       return res.status(404).json({ message: 'No requests found for this user' });
     }
 
@@ -44,7 +44,7 @@ exports.getRequestsUser = async (req, res) => {
       userRequests.map(async (request) => {
         const car = await Car.findOne({ car_uuid: request.car_uuid });
         const station = await Station.findOne({ station_uuid: request.station_uuid });
-        const loan = request.status === 'Approved' 
+        const loan = request.status == 'Approved' 
           ? await Loan.findOne({ user_uuid: request.user_uuid, car_uuid: request.car_uuid })
           : null;
         const repaymentSchedule = loan ? await RepaymentSchedule.findOne({ loan_uuid: loan.loan_uuid }) : null;
@@ -90,7 +90,7 @@ exports.getRequestsByStatus = async (req, res) => {
 
     const requests = await Request.find({ status });
     
-    if (requests.length === 0) {
+    if (requests.length == 0) {
       return res.status(404).json({ message: `No requests found with status: ${status}` });
     }
 
@@ -99,7 +99,7 @@ exports.getRequestsByStatus = async (req, res) => {
       requests.map(async (request) => {
         const car = await Car.findOne({ car_uuid: request.car_uuid });
         const station = await Station.findOne({ station_uuid: request.station_uuid });
-        const loan = request.status === 'Approved' 
+        const loan = request.status == 'Approved' 
           ? await Loan.findOne({ user_uuid: request.user_uuid, car_uuid: request.car_uuid })
           : null;
         const repaymentSchedule = loan ? await RepaymentSchedule.findOne({ loan_uuid: loan.loan_uuid }) : null;
@@ -150,7 +150,7 @@ exports.getRequestsByStationAndStatus = async (req, res) => {
 
     const requests = await Request.find(query);
     
-    if (requests.length === 0) {
+    if (requests.length == 0) {
       return res.status(404).json({ 
         message: status 
           ? `No ${status} requests found for station: ${station_uuid}`
@@ -164,7 +164,7 @@ exports.getRequestsByStationAndStatus = async (req, res) => {
       requests.map(async (request) => {
         const car = await Car.findOne({ car_uuid: request.car_uuid });
         const station = await Station.findOne({ station_uuid: request.station_uuid });
-        const loan = request.status === 'Approved' 
+        const loan = request.status == 'Approved' 
           ? await Loan.findOne({ user_uuid: request.user_uuid, car_uuid: request.car_uuid })
           : null;
         const repaymentSchedule = loan ? await RepaymentSchedule.findOne({ loan_uuid: loan.loan_uuid }) : null;
@@ -221,7 +221,7 @@ exports.getRequestsByStation = async (req, res) => {
     // Find all requests for the specified station
     const requests = await Request.find({ station_uuid });
     
-    if (requests.length === 0) {
+    if (requests.length == 0) {
       return res.status(404).json({ 
         message: `No requests found for station: ${station_uuid}`,
         requests: []
@@ -233,7 +233,7 @@ exports.getRequestsByStation = async (req, res) => {
       requests.map(async (request) => {
         const car = await Car.findOne({ car_uuid: request.car_uuid });
         const station = await Station.findOne({ station_uuid: request.station_uuid });
-        const loan = request.status === 'Approved' 
+        const loan = request.status == 'Approved' 
           ? await Loan.findOne({ user_uuid: request.user_uuid, car_uuid: request.car_uuid })
           : null;
         const repaymentSchedule = loan ? await RepaymentSchedule.findOne({ loan_uuid: loan.loan_uuid }) : null;
@@ -279,9 +279,9 @@ exports.getRequestsByStation = async (req, res) => {
       },
       total_requests: requests.length,
       requests_by_status: {
-        pending: requests.filter(r => r.status === 'Pending').length,
-        approved: requests.filter(r => r.status === 'Approved').length,
-        declined: requests.filter(r => r.status === 'Declined').length,
+        pending: requests.filter(r => r.status == 'Pending').length,
+        approved: requests.filter(r => r.status == 'Approved').length,
+        declined: requests.filter(r => r.status == 'Declined').length,
       },
       requests: requestsWithDetails
     };
@@ -305,7 +305,7 @@ exports.getAllRequests = async (req, res) => {
       requests.map(async (request) => {
         const car = await Car.findOne({ car_uuid: request.car_uuid });
         const station = await Station.findOne({ station_uuid: request.station_uuid });
-        const loan = request.status === 'Approved' 
+        const loan = request.status == 'Approved' 
           ? await Loan.findOne({ user_uuid: request.user_uuid, car_uuid: request.car_uuid })
           : null;
         const repaymentSchedule = loan ? await RepaymentSchedule.findOne({ loan_uuid: loan.loan_uuid }) : null;
@@ -357,7 +357,7 @@ exports.getRequestByUUID = async (req, res) => {
     let loan = null;
     let repaymentSchedule = null;
     
-    if (request.status === 'Approved') {
+    if (request.status == 'Approved') {
       loan = await Loan.findOne({ 
         user_uuid: request.user_uuid, 
         car_uuid: request.car_uuid 
@@ -416,7 +416,7 @@ exports.updateRequest = async (req, res) => {
     );
     
     // If status is being updated to "Approved" and wasn't already approved
-    if (status === 'Approved' && request.status !== 'Approved') {
+    if (status == 'Approved' && request.status != 'Approved') {
       // Check if loan already exists for this request
       const existingLoan = await Loan.findOne({ 
         user_uuid: request.user_uuid, 
@@ -487,7 +487,7 @@ exports.approveRequest = async (req, res) => {
     }
     
     // Check if request is already approved
-    if (request.status === 'Approved') {
+    if (request.status == 'Approved') {
       return res.status(400).json({ message: 'Request is already approved' });
     }
     
@@ -592,7 +592,7 @@ exports.declineRequest = async (req, res) => {
     }
     
     // Check if request is already declined
-    if (request.status === 'Declined') {
+    if (request.status == 'Declined') {
       return res.status(400).json({ message: 'Request is already declined' });
     }
     
