@@ -409,18 +409,44 @@ exports.updateRequest = async (req, res) => {
       return res.status(404).json({ message: 'Request not found' });
     }
     
+    // If status is being updated to "Approved" and wasn't already approved
+    if (status == 'Approved' && request.status != 'Approved') {
+      // Check if an active loan already exists for this user and car combination
+      const targetCarUuid = car_uuid || request.car_uuid;
+      const existingActiveLoan = await Loan.findOne({ 
+        user_uuid: request.user_uuid, 
+        car_uuid: targetCarUuid,
+        status: 'active'  // Only check for active loans
+      });
+      
+      // If active loan exists, prevent approval
+      if (existingActiveLoan) {
+        return res.status(400).json({ 
+          message: 'Cannot approve request: User already has an active loan for this vehicle',
+          existing_loan: {
+            loan_uuid: existingActiveLoan.loan_uuid,
+            amount: existingActiveLoan.amount,
+            balance: existingActiveLoan.balance,
+            status: existingActiveLoan.status
+          }
+        });
+      }
+    }
+    
+    // Proceed with the update
     const updatedRequest = await Request.findOneAndUpdate(
       { request_uuid: req.params.request_uuid },
       { fuel, fuel_type, amount, status, station_uuid, car_uuid, agent_uuid, date_modified: Date.now() },
       { new: true }
     );
     
-    // If status is being updated to "Approved" and wasn't already approved
+    // If status is now "Approved" and wasn't already approved before
     if (status == 'Approved' && request.status != 'Approved') {
-      // Check if loan already exists for this request
+      // Check if loan already exists for this request (double-check, though we already checked above)
+      const targetCarUuid = car_uuid || request.car_uuid;
       const existingLoan = await Loan.findOne({ 
         user_uuid: request.user_uuid, 
-        car_uuid: car_uuid || request.car_uuid 
+        car_uuid: targetCarUuid 
       });
       
       if (!existingLoan) {
@@ -431,7 +457,7 @@ exports.updateRequest = async (req, res) => {
           amount: amount || request.amount,
           balance: amount || request.amount,
           agent_uuid: agent_uuid || null,
-          car_uuid: car_uuid || request.car_uuid,
+          car_uuid: targetCarUuid,
           status: 'active'
         });
         
@@ -472,7 +498,6 @@ exports.updateRequest = async (req, res) => {
     res.status(500).json({ message: 'Error updating request', error: error.message });
   }
 };
-
 // Set request status to Approved - THIS IS THE KEY FUNCTION
 exports.approveRequest = async (req, res) => {
   try {
