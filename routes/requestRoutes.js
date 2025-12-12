@@ -25,12 +25,12 @@ router.get(
 );
 // In requestRoutes.js
 router.put(
-  "/:request_uuid/approve",
+  "/aprrove/:request_uuid",
   authenticateUser,
   RequestController.approveRequest
 );
 router.put(
-  "/:request_uuid/decline",
+  "/decline/:request_uuid",
   authenticateUser,
   RequestController.declineRequest
 );
