@@ -25,7 +25,7 @@ router.get(
 );
 // In requestRoutes.js
 router.put(
-  "/aprrove/:request_uuid",
+  "/approve/:request_uuid",
   authenticateUser,
   RequestController.approveRequest
 );
