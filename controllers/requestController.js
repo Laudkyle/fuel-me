@@ -571,8 +571,8 @@ exports.approveRequest = async (req, res) => {
     const repaymentSchedule = new RepaymentSchedule({
       repayment_schedule_uuid: uuidv4(),
       loan_uuid: newLoan.loan_uuid,
-      due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default: 30 days from now
-      repayment_frequency: 'anytime', // Default as requested
+      due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 
+      repayment_frequency: 'anytime', 
       total_amount_due: request.amount,
       status: 'pending'
     });
