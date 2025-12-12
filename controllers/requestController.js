@@ -487,11 +487,11 @@ exports.approveRequest = async (req, res) => {
     }
     
     // Check if request is already approved or declined
-    if (request.status === 'Approved') {
+    if (request.status == 'Approved') {
       return res.status(400).json({ message: 'Request is already approved' });
     }
     
-    if (request.status === 'Declined') {
+    if (request.status == 'Declined') {
       return res.status(400).json({ message: 'Request is already declined' });
     }
     
