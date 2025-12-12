@@ -477,7 +477,7 @@ exports.updateRequest = async (req, res) => {
 exports.approveRequest = async (req, res) => {
   try {
     const { request_uuid } = req.params;
-    const { agent_uuid } = req.body; // Optional: agent who approved it
+    const { agent_uuid } = req.body;
     
     // Find the request first
     const request = await Request.findOne({ request_uuid });
@@ -486,10 +486,62 @@ exports.approveRequest = async (req, res) => {
       return res.status(404).json({ message: 'Request not found' });
     }
     
-    // Check if request is already approved
-    if (request.status == 'Approved') {
+    // Check if request is already approved or declined
+    if (request.status === 'Approved') {
       return res.status(400).json({ message: 'Request is already approved' });
     }
+    
+    if (request.status === 'Declined') {
+      return res.status(400).json({ message: 'Request is already declined' });
+    }
+    
+    // Check if an active loan already exists for this user and car combination
+    const existingActiveLoan = await Loan.findOne({ 
+      user_uuid: request.user_uuid, 
+      car_uuid: request.car_uuid,
+      status: 'active'  // Only check for active loans
+    });
+    
+    // If active loan exists, decline the request
+    if (existingActiveLoan) {
+      // Update request status to Declined
+      const declinedRequest = await Request.findOneAndUpdate(
+        { request_uuid },
+        { 
+          status: 'Declined',
+          decline_reason: 'User already has an active loan for this vehicle',
+          agent_uuid: agent_uuid || null,
+          date_modified: Date.now()
+        },
+        { new: true }
+      );
+      
+      // Get car and station details for response
+      const car = await Car.findOne({ car_uuid: request.car_uuid });
+      const station = await Station.findOne({ station_uuid: request.station_uuid });
+      
+      const responseData = {
+        ...declinedRequest.toObject(),
+        car_picture: car?.picture || null,
+        car_model: car?.car_model || null,
+        car_number: car?.car_number || null,
+        station_name: station?.name || null,
+        station_location: station?.location || null,
+        existing_loan: {
+          loan_uuid: existingActiveLoan.loan_uuid,
+          amount: existingActiveLoan.amount,
+          balance: existingActiveLoan.balance,
+          status: existingActiveLoan.status
+        }
+      };
+
+      return res.status(200).json({ 
+        message: 'Request declined: User already has an active loan for this vehicle',
+        data: responseData 
+      });
+    }
+    
+    // If no active loan exists, proceed with approval
     
     // Update request status to Approved
     const updatedRequest = await Request.findOneAndUpdate(
@@ -502,46 +554,30 @@ exports.approveRequest = async (req, res) => {
       { new: true }
     );
     
-    // Check if loan already exists for this user and car combination
-    const existingLoan = await Loan.findOne({ 
-      user_uuid: request.user_uuid, 
-      car_uuid: request.car_uuid 
+    // Create new loan for this request
+    const newLoan = new Loan({
+      loan_uuid: uuidv4(),
+      user_uuid: request.user_uuid,
+      amount: request.amount,
+      balance: request.amount, // Initial balance equals amount
+      agent_uuid: agent_uuid || null,
+      car_uuid: request.car_uuid,
+      status: 'active'
     });
     
-    let newLoan = null;
-    let repaymentSchedule = null;
+    await newLoan.save();
     
-    // Create loan only if it doesn't already exist
-    if (!existingLoan) {
-      // Create corresponding loan
-      newLoan = new Loan({
-        loan_uuid: uuidv4(),
-        user_uuid: request.user_uuid,
-        amount: request.amount,
-        balance: request.amount, // Initial balance equals amount
-        agent_uuid: agent_uuid || null,
-        car_uuid: request.car_uuid,
-        status: 'active'
-      });
-      
-      await newLoan.save();
-      
-      // Create repayment schedule with default 'anytime' frequency
-      repaymentSchedule = new RepaymentSchedule({
-        repayment_schedule_uuid: uuidv4(),
-        loan_uuid: newLoan.loan_uuid,
-        due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default: 30 days from now
-        repayment_frequency: 'anytime', // Default as requested
-        total_amount_due: request.amount,
-        status: 'pending'
-      });
-      
-      await repaymentSchedule.save();
-    } else {
-      // Use existing loan
-      newLoan = existingLoan;
-      repaymentSchedule = await RepaymentSchedule.findOne({ loan_uuid: existingLoan.loan_uuid });
-    }
+    // Create repayment schedule with default 'anytime' frequency
+    const repaymentSchedule = new RepaymentSchedule({
+      repayment_schedule_uuid: uuidv4(),
+      loan_uuid: newLoan.loan_uuid,
+      due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default: 30 days from now
+      repayment_frequency: 'anytime', // Default as requested
+      total_amount_due: request.amount,
+      status: 'pending'
+    });
+    
+    await repaymentSchedule.save();
     
     // Get car and station details
     const car = await Car.findOne({ car_uuid: request.car_uuid });
@@ -554,31 +590,29 @@ exports.approveRequest = async (req, res) => {
       car_number: car?.car_number || null,
       station_name: station?.name || null,
       station_location: station?.location || null,
-      loan_created: !existingLoan,
-      loan: newLoan ? {
+      loan: {
         loan_uuid: newLoan.loan_uuid,
         amount: newLoan.amount,
         balance: newLoan.balance,
         status: newLoan.status
-      } : null,
-      repayment_schedule: repaymentSchedule ? {
+      },
+      repayment_schedule: {
         repayment_schedule_uuid: repaymentSchedule.repayment_schedule_uuid,
         due_date: repaymentSchedule.due_date,
         repayment_frequency: repaymentSchedule.repayment_frequency,
         total_amount_due: repaymentSchedule.total_amount_due,
         status: repaymentSchedule.status
-      } : null
+      }
     };
 
     res.status(200).json({ 
-      message: existingLoan ? 'Request approved (existing loan used)' : 'Request approved successfully and loan created',
+      message: 'Request approved successfully and loan created',
       data: responseData 
     });
   } catch (error) {
     res.status(500).json({ message: 'Error approving request', error: error.message });
   }
 };
-
 // Set request status to Declined
 exports.declineRequest = async (req, res) => {
   try {
