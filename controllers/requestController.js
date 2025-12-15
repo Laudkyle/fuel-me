@@ -1,5 +1,53 @@
 const { v4: uuidv4 } = require('uuid');
-const { Request, Car, Loan, RepaymentSchedule, Station } = require('../models');
+const { Request, Car, Loan, RepaymentSchedule, Station, Profile } = require('../models'); // Added Profile
+
+// Helper function to check profile limit
+const checkProfileLimit = async (user_uuid, car_uuid, requestAmount) => {
+  try {
+    // Get user profile
+    const profile = await Profile.findOne({ user_uuid });
+    
+    if (!profile || !profile.limit) {
+      // If no profile or limit set, allow the request
+      return { 
+        allowed: true, 
+        currentTotal: 0, 
+        limit: 0,
+        profileExists: !!profile 
+      };
+    }
+    
+    // Get all active loans for this user-car combination
+    const activeLoans = await Loan.find({ 
+      user_uuid, 
+      car_uuid,
+      status: 'active' 
+    });
+    
+    // Calculate total of current active loans
+    const currentTotal = activeLoans.reduce((sum, loan) => sum + loan.balance, 0);
+    
+    // Check if adding new request would exceed limit
+    const newTotal = currentTotal + requestAmount;
+    
+    return {
+      allowed: newTotal <= profile.limit,
+      currentTotal,
+      limit: profile.limit,
+      newTotal,
+      activeLoansCount: activeLoans.length,
+      profileExists: true
+    };
+  } catch (error) {
+    console.error('Error checking profile limit:', error);
+    // In case of error, allow the request (fail-open approach)
+    return { 
+      allowed: true, 
+      error: error.message,
+      profileExists: false 
+    };
+  }
+};
 
 // Create a new request
 exports.createRequest = async (req, res) => {
@@ -9,6 +57,21 @@ exports.createRequest = async (req, res) => {
     // Validate that all required fields are present
     if (!user_uuid || !fuel || !fuel_type || !amount || !station_uuid || !car_uuid) {
       return res.status(400).json({ message: 'Missing required fields' });
+    }
+    
+    // Validate amount is positive number
+    if (amount <= 0) {
+      return res.status(400).json({ message: 'Amount must be greater than 0' });
+    }
+    
+    // Check profile limit before creating request
+    const limitCheck = await checkProfileLimit(user_uuid, car_uuid, amount);
+    
+    if (!limitCheck.allowed) {
+      return res.status(400).json({ 
+        message: `Request would exceed credit limit. Current: ${limitCheck.currentTotal}, Limit: ${limitCheck.limit}, Request: ${amount}`,
+        details: limitCheck
+      });
     }
     
     const newRequest = new Request({
@@ -23,7 +86,11 @@ exports.createRequest = async (req, res) => {
     });
     
     await newRequest.save();
-    res.status(201).json({ message: 'Request created successfully', request: newRequest });
+    res.status(201).json({ 
+      message: 'Request created successfully', 
+      request: newRequest,
+      limit_check: limitCheck
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error creating request', error: error.message });
   }
@@ -33,7 +100,7 @@ exports.createRequest = async (req, res) => {
 exports.getRequestsUser = async (req, res) => {
   try {
     const { user_uuid } = req.params;
-    const userRequests = await Request.find({ user_uuid });
+    const userRequests = await Request.find({ user_uuid }).sort({ date_created: -1 });
     
     if (userRequests.length == 0) {
       return res.status(404).json({ message: 'No requests found for this user' });
@@ -88,7 +155,7 @@ exports.getRequestsByStatus = async (req, res) => {
       return res.status(400).json({ message: 'Status parameter is required' });
     }
 
-    const requests = await Request.find({ status });
+    const requests = await Request.find({ status }).sort({ date_created: -1 });
     
     if (requests.length == 0) {
       return res.status(404).json({ message: `No requests found with status: ${status}` });
@@ -133,6 +200,7 @@ exports.getRequestsByStatus = async (req, res) => {
     res.status(500).json({ message: 'Error fetching requests by status', error: error.message });
   }
 };
+
 // Get requests for a specific station with status filter
 exports.getRequestsByStationAndStatus = async (req, res) => {
   try {
@@ -148,7 +216,7 @@ exports.getRequestsByStationAndStatus = async (req, res) => {
       query.status = status;
     }
 
-    const requests = await Request.find(query);
+    const requests = await Request.find(query).sort({ date_created: -1 });
     
     if (requests.length == 0) {
       return res.status(404).json({ 
@@ -159,7 +227,7 @@ exports.getRequestsByStationAndStatus = async (req, res) => {
       });
     }
 
-    // Populate details (same as above)
+    // Populate details
     const requestsWithDetails = await Promise.all(
       requests.map(async (request) => {
         const car = await Car.findOne({ car_uuid: request.car_uuid });
@@ -209,6 +277,7 @@ exports.getRequestsByStationAndStatus = async (req, res) => {
     });
   }
 };
+
 // Get all requests for a specific station
 exports.getRequestsByStation = async (req, res) => {
   try {
@@ -219,7 +288,7 @@ exports.getRequestsByStation = async (req, res) => {
     }
 
     // Find all requests for the specified station
-    const requests = await Request.find({ station_uuid });
+    const requests = await Request.find({ station_uuid }).sort({ date_created: -1 });
     
     if (requests.length == 0) {
       return res.status(404).json({ 
@@ -298,7 +367,7 @@ exports.getRequestsByStation = async (req, res) => {
 // Get all requests
 exports.getAllRequests = async (req, res) => {
   try {
-    const requests = await Request.find();
+    const requests = await Request.find().sort({ date_created: -1 });
     
     // Populate car details including picture for all requests
     const requestsWithDetails = await Promise.all(
@@ -368,6 +437,15 @@ exports.getRequestByUUID = async (req, res) => {
       }
     }
     
+    // Get profile limit information
+    const profile = await Profile.findOne({ user_uuid: request.user_uuid });
+    const activeLoans = await Loan.find({ 
+      user_uuid: request.user_uuid, 
+      car_uuid: request.car_uuid,
+      status: 'active' 
+    });
+    const currentTotal = activeLoans.reduce((sum, loan) => sum + loan.balance, 0);
+    
     const requestWithDetails = {
       ...request.toObject(),
       car_picture: car?.picture || null,
@@ -389,7 +467,13 @@ exports.getRequestByUUID = async (req, res) => {
         repayment_frequency: repaymentSchedule.repayment_frequency,
         total_amount_due: repaymentSchedule.total_amount_due,
         status: repaymentSchedule.status
-      } : null
+      } : null,
+      credit_info: {
+        profile_limit: profile?.limit || 0,
+        current_active_loans_total: currentTotal,
+        active_loans_count: activeLoans.length,
+        remaining_credit: profile?.limit ? profile.limit - currentTotal : 0
+      }
     };
 
     res.status(200).json(requestWithDetails);
@@ -409,6 +493,21 @@ exports.updateRequest = async (req, res) => {
       return res.status(404).json({ message: 'Request not found' });
     }
     
+    // Check profile limit if amount is being increased or status changed to Approved
+    if ((amount && amount > request.amount) || status == 'Approved') {
+      const targetCarUuid = car_uuid || request.car_uuid;
+      const targetAmount = amount || request.amount;
+      
+      const limitCheck = await checkProfileLimit(request.user_uuid, targetCarUuid, targetAmount);
+      
+      if (!limitCheck.allowed) {
+        return res.status(400).json({ 
+          message: `Action would exceed credit limit. Current: ${limitCheck.currentTotal}, Limit: ${limitCheck.limit}, Request: ${targetAmount}`,
+          details: limitCheck
+        });
+      }
+    }
+    
     // If status is being updated to "Approved" and wasn't already approved
     if (status == 'Approved' && request.status != 'Approved') {
       // Check if an active loan already exists for this user and car combination
@@ -416,21 +515,11 @@ exports.updateRequest = async (req, res) => {
       const existingActiveLoan = await Loan.findOne({ 
         user_uuid: request.user_uuid, 
         car_uuid: targetCarUuid,
-        status: 'active'  // Only check for active loans
+        status: 'active'
       });
       
-      // If active loan exists, prevent approval
-      if (existingActiveLoan) {
-        return res.status(400).json({ 
-          message: 'Cannot approve request: User already has an active loan for this vehicle',
-          existing_loan: {
-            loan_uuid: existingActiveLoan.loan_uuid,
-            amount: existingActiveLoan.amount,
-            balance: existingActiveLoan.balance,
-            status: existingActiveLoan.status
-          }
-        });
-      }
+      // Note: We allow multiple loans per user-car, so we don't block here
+      // Only check was for limit (already done above)
     }
     
     // Proceed with the update
@@ -442,39 +531,38 @@ exports.updateRequest = async (req, res) => {
     
     // If status is now "Approved" and wasn't already approved before
     if (status == 'Approved' && request.status != 'Approved') {
-      // Check if loan already exists for this request (double-check, though we already checked above)
+      // Check if loan already exists for this request
       const targetCarUuid = car_uuid || request.car_uuid;
+      const targetAmount = amount || request.amount;
       const existingLoan = await Loan.findOne({ 
         user_uuid: request.user_uuid, 
         car_uuid: targetCarUuid 
       });
       
-      if (!existingLoan) {
-        // Create corresponding loan
-        const newLoan = new Loan({
-          loan_uuid: uuidv4(),
-          user_uuid: request.user_uuid,
-          amount: amount || request.amount,
-          balance: amount || request.amount,
-          agent_uuid: agent_uuid || null,
-          car_uuid: targetCarUuid,
-          status: 'active'
-        });
-        
-        await newLoan.save();
-        
-        // Create repayment schedule with default 'anytime' frequency
-        const repaymentSchedule = new RepaymentSchedule({
-          repayment_schedule_uuid: uuidv4(),
-          loan_uuid: newLoan.loan_uuid,
-          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          repayment_frequency: 'anytime',
-          total_amount_due: amount || request.amount,
-          status: 'pending'
-        });
-        
-        await repaymentSchedule.save();
-      }
+      // Create new loan (multiple loans allowed per user-car)
+      const newLoan = new Loan({
+        loan_uuid: uuidv4(),
+        user_uuid: request.user_uuid,
+        amount: targetAmount,
+        balance: targetAmount,
+        agent_uuid: agent_uuid || null,
+        car_uuid: targetCarUuid,
+        status: 'active'
+      });
+      
+      await newLoan.save();
+      
+      // Create repayment schedule with default 'anytime' frequency
+      const repaymentSchedule = new RepaymentSchedule({
+        repayment_schedule_uuid: uuidv4(),
+        loan_uuid: newLoan.loan_uuid,
+        due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        repayment_frequency: 'anytime',
+        total_amount_due: targetAmount,
+        status: 'pending'
+      });
+      
+      await repaymentSchedule.save();
     }
 
     // Get car details
@@ -498,7 +586,8 @@ exports.updateRequest = async (req, res) => {
     res.status(500).json({ message: 'Error updating request', error: error.message });
   }
 };
-// Set request status to Approved - THIS IS THE KEY FUNCTION
+
+// Set request status to Approved
 exports.approveRequest = async (req, res) => {
   try {
     const { request_uuid } = req.params;
@@ -520,21 +609,17 @@ exports.approveRequest = async (req, res) => {
       return res.status(400).json({ message: 'Request is already declined' });
     }
     
-    // Check if an active loan already exists for this user and car combination
-    const existingActiveLoan = await Loan.findOne({ 
-      user_uuid: request.user_uuid, 
-      car_uuid: request.car_uuid,
-      status: 'active'  // Only check for active loans
-    });
+    // Check profile limit before approval
+    const limitCheck = await checkProfileLimit(request.user_uuid, request.car_uuid, request.amount);
     
-    // If active loan exists, decline the request
-    if (existingActiveLoan) {
+    // Only decline if limit would be exceeded
+    if (!limitCheck.allowed) {
       // Update request status to Declined
       const declinedRequest = await Request.findOneAndUpdate(
         { request_uuid },
         { 
           status: 'Declined',
-          decline_reason: 'User already has an active loan for this vehicle',
+          decline_reason: `Request would exceed credit limit. Current: ${limitCheck.currentTotal}, Limit: ${limitCheck.limit}`,
           agent_uuid: agent_uuid || null,
           date_modified: Date.now()
         },
@@ -552,21 +637,16 @@ exports.approveRequest = async (req, res) => {
         car_number: car?.car_number || null,
         station_name: station?.name || null,
         station_location: station?.location || null,
-        existing_loan: {
-          loan_uuid: existingActiveLoan.loan_uuid,
-          amount: existingActiveLoan.amount,
-          balance: existingActiveLoan.balance,
-          status: existingActiveLoan.status
-        }
+        limit_check: limitCheck
       };
 
       return res.status(200).json({ 
-        message: 'Request declined: User already has an active loan for this vehicle',
+        message: 'Request declined: Would exceed credit limit',
         data: responseData 
       });
     }
     
-    // If no active loan exists, proceed with approval
+    // If within limit, proceed with approval (multiple loans allowed)
     
     // Update request status to Approved
     const updatedRequest = await Request.findOneAndUpdate(
@@ -579,12 +659,12 @@ exports.approveRequest = async (req, res) => {
       { new: true }
     );
     
-    // Create new loan for this request
+    // Create new loan for this request (multiple loans allowed per user-car)
     const newLoan = new Loan({
       loan_uuid: uuidv4(),
       user_uuid: request.user_uuid,
       amount: request.amount,
-      balance: request.amount, // Initial balance equals amount
+      balance: request.amount,
       agent_uuid: agent_uuid || null,
       car_uuid: request.car_uuid,
       status: 'active'
@@ -596,8 +676,8 @@ exports.approveRequest = async (req, res) => {
     const repaymentSchedule = new RepaymentSchedule({
       repayment_schedule_uuid: uuidv4(),
       loan_uuid: newLoan.loan_uuid,
-      due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 
-      repayment_frequency: 'anytime', 
+      due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      repayment_frequency: 'anytime',
       total_amount_due: request.amount,
       status: 'pending'
     });
@@ -627,7 +707,8 @@ exports.approveRequest = async (req, res) => {
         repayment_frequency: repaymentSchedule.repayment_frequency,
         total_amount_due: repaymentSchedule.total_amount_due,
         status: repaymentSchedule.status
-      }
+      },
+      limit_check: limitCheck
     };
 
     res.status(200).json({ 
@@ -638,6 +719,7 @@ exports.approveRequest = async (req, res) => {
     res.status(500).json({ message: 'Error approving request', error: error.message });
   }
 };
+
 // Set request status to Declined
 exports.declineRequest = async (req, res) => {
   try {
@@ -653,6 +735,11 @@ exports.declineRequest = async (req, res) => {
     // Check if request is already declined
     if (request.status == 'Declined') {
       return res.status(400).json({ message: 'Request is already declined' });
+    }
+    
+    // Check if request is already approved
+    if (request.status == 'Approved') {
+      return res.status(400).json({ message: 'Cannot decline an already approved request' });
     }
     
     const updatedRequest = await Request.findOneAndUpdate(
@@ -691,14 +778,85 @@ exports.declineRequest = async (req, res) => {
 // Delete a request
 exports.deleteRequest = async (req, res) => {
   try {
-    const deletedRequest = await Request.findOneAndDelete({ request_uuid: req.params.request_uuid });
+    const { request_uuid } = req.params;
     
-    if (!deletedRequest) {
+    // Find the request first to check status
+    const request = await Request.findOne({ request_uuid });
+    
+    if (!request) {
       return res.status(404).json({ message: 'Request not found' });
     }
     
-    res.status(200).json({ message: 'Request deleted successfully' });
+    // Check if request is approved - we might want to prevent deletion of approved requests
+    if (request.status == 'Approved') {
+      return res.status(400).json({ 
+        message: 'Cannot delete an approved request. Please contact administrator.',
+        suggestion: 'Consider declining the request instead if it was approved in error.'
+      });
+    }
+    
+    // Delete the request
+    const deletedRequest = await Request.findOneAndDelete({ request_uuid });
+    
+    res.status(200).json({ 
+      message: 'Request deleted successfully',
+      deleted_request: {
+        request_uuid: deletedRequest.request_uuid,
+        status: deletedRequest.status,
+        amount: deletedRequest.amount
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting request', error: error.message });
+  }
+};
+
+// Get user's credit limit information
+exports.getUserCreditInfo = async (req, res) => {
+  try {
+    const { user_uuid, car_uuid } = req.params;
+    
+    if (!user_uuid || !car_uuid) {
+      return res.status(400).json({ message: 'User UUID and Car UUID are required' });
+    }
+    
+    // Get profile
+    const profile = await Profile.findOne({ user_uuid });
+    
+    // Get all active loans for this user-car combination
+    const activeLoans = await Loan.find({ 
+      user_uuid, 
+      car_uuid,
+      status: 'active' 
+    });
+    
+    // Calculate totals
+    const currentTotal = activeLoans.reduce((sum, loan) => sum + loan.balance, 0);
+    const limit = profile?.limit || 0;
+    const remainingCredit = limit - currentTotal;
+    
+    const creditInfo = {
+      user_uuid,
+      car_uuid,
+      profile_limit: limit,
+      current_active_loans_total: currentTotal,
+      active_loans_count: activeLoans.length,
+      remaining_credit: remainingCredit > 0 ? remainingCredit : 0,
+      limit_exceeded: currentTotal > limit,
+      active_loans: activeLoans.map(loan => ({
+        loan_uuid: loan.loan_uuid,
+        amount: loan.amount,
+        balance: loan.balance,
+        date_created: loan.date_created
+      })),
+      can_request_up_to: remainingCredit > 0 ? remainingCredit : 0
+    };
+    
+    res.status(200).json(creditInfo);
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Error fetching credit information', 
+      error: error.message 
+    });
   }
 };

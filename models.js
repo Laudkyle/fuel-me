@@ -147,6 +147,9 @@ const LoanSchema = new mongoose.Schema({
   agent_uuid: { type: String, ref: 'Agent' },
   car_uuid: { type: String, ref: 'Car' },
   status: { type: String },
+  date_created: { type: Date, default: Date.now },
+  date_modified: { type: Date },
+  date_deleted: { type: Date },
 });
 
 // Repayment Schedules
