@@ -16,9 +16,13 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const cardRoutes = require("./routes/cardRoutes");
 const momoRoutes = require("./routes/momoRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
-const loanRoutes = require("./routes/loanRoutes");
+
+// NEW: BNPL Fuel Credit System Routes
+const creditTransactionRoutes = require("./routes/creditTransactionRoutes");
+const billingCycleRoutes = require("./routes/billingCycleRoutes");
 const repaymentScheduleRoutes = require("./routes/repaymentScheduleRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+
 // Database connection
 const connectDB = require("./config/db");
 
@@ -42,9 +46,12 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/cards", cardRoutes);
 app.use("/api/momo", momoRoutes);
 app.use("/api/transactions", transactionRoutes);
-app.use("/api/loans", loanRoutes);
-app.use("/api/repaymentSchedules", repaymentScheduleRoutes);
-app.use("/api/dashboard",dashboardRoutes)
+
+// NEW: BNPL Fuel Credit System Routes
+app.use("/api/credit-transactions", creditTransactionRoutes); // Replaces old loan system
+app.use("/api/billing-cycles", billingCycleRoutes); // Manages billing cycles
+app.use("/api/repayment-schedules", repaymentScheduleRoutes); // Updated repayment schedules
+app.use("/api/dashboard", dashboardRoutes);
 
 // Connect to the Database
 connectDB();
@@ -53,4 +60,12 @@ connectDB();
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(`BNPL Fuel Credit System API available at:`);
+  console.log(`- POST /api/credit-transactions/fuel-purchase`);
+  console.log(`- POST /api/credit-transactions/repayment`);
+  console.log(`- GET  /api/credit-transactions/user/:user_uuid`);
+  console.log(`- POST /api/billing-cycles/get-or-create`);
+  console.log(`- GET  /api/billing-cycles/history/:user_uuid`);
+  console.log(`- POST /api/repayment-schedules/from-cycle`);
+  console.log(`- GET  /api/repayment-schedules/user/:user_uuid`);
 });
