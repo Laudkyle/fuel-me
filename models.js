@@ -12,6 +12,7 @@ const ProfileSchema = new mongoose.Schema({
   profile_uuid: { type: String, required: true, unique: true, default: uuidv4 },
   name: { type: String, required: true }, // Changed from fullname to match frontend
   address: { type: String },
+  limit:{type:Number, default:1500},
   email: { type: String },
   category: { type: String },
   staff_id: { type: String }, // Kept for Civil Work category
